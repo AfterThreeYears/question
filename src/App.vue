@@ -1,28 +1,28 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <question-render
+      :prefix-cls="prefixCls"
+      :questions="questions"
+      :page-no-cursor="pageNoCursor"
+    />
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import questionRender from './components/questionRender'
+import questions from './components/questions';
 
 export default {
   name: 'app',
+  data() {
+    return {
+      questions,
+      prefixCls: 'mec',
+      pageNoCursor: 0,
+    };
+  },
   components: {
-    HelloWorld
+    questionRender
   }
 }
 </script>
-
-<style>
-#app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style>
