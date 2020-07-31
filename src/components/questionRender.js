@@ -1,48 +1,5 @@
-<template>
-  <ul :class="`${prefixCls}-question-container`">
-    <li
-      v-for="question in realQuestions"
-      :key="question.key"
-      :class="`${prefixCls}-item`"
-    >
-      <p :class="`${prefixCls}-title-container`">
-        <template v-if="isComponent(question.title)">
-          <component :is="question.title" />
-        </template>
-        <template v-else>{{ question.title }}</template>
-      </p>
-      <vant-input
-        v-if="question.widgetType === 'input'"
-        :value="question.widgetProps.value"
-        :class="`${prefixCls}-input`"
-        @input="(val) => handleInput(val, question)"
-      />
-      <van-checkbox-group
-        v-if="question.widgetType === 'checkbox'"
-        :value="question.value"
-        :class="`${prefixCls}-checkbox-group`"
-        @input="(val) => handleInput(val, question)"
-      >
-        <van-checkbox
-          v-for="option in question.options"
-          :key="option.value"
-          :name="option.value"
-          shape="square"
-        >
-          <template v-if="isComponent(option.label)">
-            <component :is="option.label" />
-          </template>
-          <template v-else>{{ option.label }}</template>
-        </van-checkbox>
-      </van-checkbox-group>
-    </li>
-</ul>
-</template>
-
-<script>
 import _ from 'lodash';
 import Schema from 'async-validator';
-import questions from './questions';
 
 export default {
   name: 'question-render',
@@ -77,7 +34,7 @@ export default {
 
     prefixCls: {
       type: String,
-      default: 'mec-question'
+      default: 'wy-question'
     },
   
     /**
@@ -230,6 +187,46 @@ export default {
         // eslint-disable-next-line no-console
         console.error('mounted validate error', error);
     }
+  },
+
+  render() {
+    return <ul :class="`${prefixCls}-question-container`">
+      <li
+        v-for="question in realQuestions"
+        :key="question.key"
+        :class="`${prefixCls}-item`"
+      >
+        <p :class="`${prefixCls}-title-container`">
+          <template v-if="isComponent(question.title)">
+            <component :is="question.title" />
+          </template>
+          <template v-else>{{ question.title }}</template>
+        </p>
+        <vant-input
+          v-if="question.widgetType === 'input'"
+          :value="question.widgetProps.value"
+          :class="`${prefixCls}-input`"
+          @input="(val) => handleInput(val, question)"
+        />
+        <van-checkbox-group
+          v-if="question.widgetType === 'checkbox'"
+          :value="question.value"
+          :class="`${prefixCls}-checkbox-group`"
+          @input="(val) => handleInput(val, question)"
+        >
+          <van-checkbox
+            v-for="option in question.options"
+            :key="option.value"
+            :name="option.value"
+            shape="square"
+          >
+            <template v-if="isComponent(option.label)">
+              <component :is="option.label" />
+            </template>
+            <template v-else>{{ option.label }}</template>
+          </van-checkbox>
+        </van-checkbox-group>
+      </li>
+  </ul>
   }
 };
-</script>
