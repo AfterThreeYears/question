@@ -3,7 +3,7 @@
     <question-render
       :prefix-cls="prefixCls"
       :questions="questions"
-      :page-no-cursor="pageNoCursor"
+      :page-no-cursor.sync="pageNoCursor"
     />
   </div>
 </template>
