@@ -4,6 +4,7 @@ import NextPager from './NextPager';
 // import Submit from './Submit';
 // import MyTitle from './MyTitle';
 import { FORM, ISOLATION } from './questionRenderHelper';
+import CustomRadio from './CustomRadio';
 
 export default [
   {
@@ -13,7 +14,6 @@ export default [
     propsContainer: {
       props: {
         value: '1',
-        disabled: true,
       }
     },
     key: 'name',
@@ -24,7 +24,7 @@ export default [
     key: 'pager1',
   },
   {
-    title: '请问您的年龄?',
+    title: '请问您的性别?',
     widgetType: FORM,
     widget: Field,
     key: 'age',
