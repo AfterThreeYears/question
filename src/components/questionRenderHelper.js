@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import _, { difference } from 'lodash';
 
 export function isComponent(component) {
   return _.isObject(component) && _.isFunction(component.render);
@@ -31,4 +31,15 @@ export function getQuestionByPageNoCursor(questions, pageNoCursor) {
     i++;
   }
   return [];
+}
+
+/**
+ * 根据互斥规则，返回新的value
+ * @param {*} mutex 
+ * @param {*} newValue 
+ * @param {*} oldValue 
+ */
+export function convertValueByMutex(mutex, newValue, oldValue) {
+  const diffValue = difference(newValue, oldValue)[0];
+  return newValue.filter(value => mutex[value] === mutex[diffValue]);
 }

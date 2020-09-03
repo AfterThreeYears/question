@@ -1,22 +1,36 @@
-// import Pager from './Pager';
-import { Field } from 'vant';
+import { Field, Picker } from 'vant';
 import NextPager from './NextPager';
-// import Submit from './Submit';
-// import MyTitle from './MyTitle';
+import MyTitle from './MyTitle';
 import { FORM, ISOLATION } from './questionRenderHelper';
-import CustomRadio from './CustomRadio';
+import UIRadio from './UIRadio.vue';
+import UICheckbox from './UICheckbox.vue';
 
 export default [
   {
     title: '请问您的姓名?',
+    key: 'name',
     widgetType: FORM,
     widget: Field,
-    propsContainer: {
-      props: {
-        value: '1',
-      }
+    rules: [{
+      type: 'string',
+      required: true
+    }],
+  },
+  {
+    title: '您的地址?',
+    key: 'address',
+    widgetType: FORM,
+    widget: Picker,
+    widgetProps: {
+      columns: ['杭州', '宁波', '温州', '绍兴', '湖州', '嘉兴', '金华', '衢州'],
+      showToolbar: true,
+      title: "标题"
     },
-    key: 'name',
+    rules: [{
+      type: 'string',
+      required: true
+    }],
+    trigger: 'confirm',
   },
   {
     widgetType: ISOLATION,
@@ -24,91 +38,101 @@ export default [
     key: 'pager1',
   },
   {
-    title: '请问您的性别?',
-    widgetType: FORM,
-    widget: Field,
+    title: MyTitle,
     key: 'age',
+    widgetType: FORM,
+    widget: UIRadio,
+    widgetProps: {
+      options: [
+        {
+          value: 'nan',
+          label: '男'
+        },
+        {
+          value: 'nv',
+          label: '女'
+        }
+      ],
+    },
+    config: {
+      related: {
+        nan: 'hobby',
+        nv: 'skill'
+      }
+    },
+    rules: [{
+      type: 'string',
+      required: true
+    }],
   },
   {
     widgetType: ISOLATION,
     widget: NextPager,
     key: 'pager2',
   },
-  // {
-  //   title: MyTitle,
-  //   widgetType: 'radio',
-  //   widgetProps: {
-  //     value: null,
-  //     options: [{
-  //       label: '男',
-  //       value: 1,
-  //       related: ['specialty'],
-  //     }, {
-  //       label: '女',
-  //       value: 2,
-  //       related: ['hoppy'],
-  //     }],
-  //   },
-  //   key: 'sex',
-  //   rules: [{
-  //     type: 'number',
-  //     required: true
-  //   }],
-  // },
-  // {
-  //   title: null,
-  //   widgetType: 'pager',
-  //   widget: Pager,
-  //   key: 'pager2',
-  // },
-  // {
-  //   title: '你的爱好',
-  //   widgetType: 'checkbox',
-  //   widgetProps: {
-  //     value: null,
-  //     options: [{
-  //       label: '插画',
-  //       value: 1,
-  //     }, {
-  //       label: '画画',
-  //       value: 2,
-  //     }, {
-  //       label: '玩耍',
-  //       value: 3,
-  //     }],
-  //   },
-  //   key: 'hoppy',
-  //   rules: [{
-  //     type: 'number',
-  //     required: true
-  //   }],
-  // },
-  // {
-  //   title: '你的特长',
-  //   widgetType: 'checkbox',
-  //   widgetProps: {
-  //     value: null,
-  //     options: [{
-  //       label: '足球',
-  //       value: 1,
-  //     }, {
-  //       label: '篮球',
-  //       value: 2,
-  //     }, {
-  //       label: '以上都是',
-  //       value: 3,
-  //     }],
-  //   },
-  //   key: 'specialty',
-  //   rules: [{
-  //     type: 'number',
-  //     required: true
-  //   }],
-  // },
-  // {
-  //   title: null,
-  //   widgetType: 'pager',
-  //   widget: Submit,
-  //   key: 'pager3',
-  // },
+  {
+    title: '请问您的爱好（男生）?',
+    key: 'hobby',
+    widgetType: FORM,
+    widget: UICheckbox,
+    widgetProps: {
+      options: [
+        {
+          value: 'lanqiu',
+          label: '洗衣'
+        },
+        {
+          value: 'zuqiu',
+          label: '捏脚'
+        },
+        {
+          value: 'doushi',
+          label: '以上都是'
+        }
+      ],
+    },
+    config: {
+      mutex: {
+        lanqiu: 1,
+        doushi: 2,
+        zuqiu: 1,
+      },
+    },
+    rules: [{
+      type: 'string',
+      required: true
+    }],
+  },
+  {
+    title: '请问您的擅长（女生）?',
+    key: 'skill',
+    widgetType: FORM,
+    widget: UICheckbox,
+    widgetProps: {
+      options: [
+        {
+          value: 'xiyi',
+          label: '吃饭'
+        },
+        {
+          value: 'zuofan',
+          label: '躺着'
+        },
+        {
+          value: 'xiyifu',
+          label: '买盘子'
+        }
+      ],
+    },
+    rules: [{
+      type: 'array',
+      required: true,
+      message: '请选择擅长'
+    }],
+  },
+  {
+    widgetType: ISOLATION,
+    widget: NextPager,
+    key: 'pager3',
+  },
 ].map((item, index) => ({ ...item, index }));

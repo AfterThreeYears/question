@@ -1,35 +1,16 @@
-// import _ from 'lodash';
-// import Schema from 'async-validator';
-import { isComponent, getQuestionByPageNoCursor } from './questionRenderHelper';
-import { isNil } from 'lodash';
+import Schema from 'async-validator';
+import {
+  isComponent,
+  getQuestionByPageNoCursor,
+  convertValueByMutex,
+} from './questionRenderHelper';
+import { isNil, cloneDeep, noop } from 'lodash';
 import { FORM, ISOLATION } from './questionRenderHelper';
 
 export default {
   name: 'question-render',
 
   props: {
-    /**
-     * question 数据类型 Question[]
-        interface Question {
-            title: string;
-            type: 'radio' | 'checkbox' | 'select' | 'input';
-            key: string; // 唯一key
-            propsContainer: {
-                isShowNo: boolean; // 是否显示索引
-            };
-            options: Options; checkbox select radio 需要的子项
-            rules: Rules[]; 校验规则，使用async-validator校验库
-            skip: boolean; 是否跳过题目
-            index: number; 从0开始
-            value: any; 选中值
-        }
-
-        interface Options {
-            label: string;
-            value: string;
-        }
-        */
-
     questions: {
       type: Array,
       required: true
@@ -39,14 +20,6 @@ export default {
       type: String,
       default: 'wy-question'
     },
-  
-    /**
-     * 每当选项值变化会调用该函数，可以通过该函数生成新的问题列表
-     */
-    // onConvert: {
-    //   type: Function,
-    //   default: (val, questions) => questions
-    // },
 
     pageNoCursor: {
       type: Number,
@@ -54,11 +27,11 @@ export default {
     },
   },
 
-  // data() {
-  //   return {
-  //       isValidate: false
-  //   };
-  // },
+  data() {
+    return {
+        isValidate: false
+    };
+  },
 
   // watch: {
   //   questions() {
@@ -72,95 +45,72 @@ export default {
 
   methods: {
     onNext() {
-      this.$emit('update:pageNoCursor', this.pageNoCursor + 1);
+      this.handleValidate(true)
+        .then(() => {
+          this.$emit('update:pageNoCursor', this.pageNoCursor + 1);
+        })
+        .catch(noop);
     },
 
     onPrev() {
       this.$emit('update:pageNoCursor', this.pageNoCursor - 1);
     },
 
-    onSubmit() {},
+    onSubmit() {
+      this.handleValidate(true)
+        .then(() => {
+          this.$emit('submit');
+        })
+        .catch(noop);
+    },
 
-    handleInput() {
-    // const copyQuestions = _.cloneDeep(this.questions);
-    // copyQuestions[question.index].value = val;
-    // this.$emit('update:questions', this.onConvert(val, copyQuestions, question));
-      console.log(arguments);
+    handleInput(value, index) {
+      let newValue = value;
+      const copyQuestions = cloneDeep(this.questions);
+      const copyQuestion = copyQuestions[index];
+      if (isNil(copyQuestion.widgetProps)) {
+        copyQuestion.widgetProps = {};
+      }
+      // 互斥逻辑
+      const mutex = copyQuestion.config?.mutex;
+      if (mutex) {
+        const oldValue = copyQuestion.widgetProps.value;
+        newValue = convertValueByMutex(mutex, newValue, oldValue);
+      }
+      copyQuestion.widgetProps.value = newValue;
+      this.$emit('update:questions', copyQuestions);
+    },
+
+    handleValidate(showTip) {
+      const source = this.realQuestions
+        .filter(question => question.widgetType === FORM)
+        .reduce((result, current) => ({
+          ...result,
+          [current.key]: current.widgetProps?.value
+        }), {});
+      return new Promise((resolve, reject) => {
+        // eslint-disable-next-line consistent-return
+        this.schema.validate(source, (errors) => {
+          if (errors) {
+            if (showTip) {
+              this.$emit('showErrorMessage', errors);
+            }
+            this.isValidate = false;
+            reject();
+            return;
+          }
+          this.isValidate = true;
+          resolve();
+        });
+      });
     },
   },
 
-  // methods: {
-  //   handleInput(val, question) {
-  //       const copyQuestions = _.cloneDeep(this.questions);
-  //       copyQuestions[question.index].value = val;
-  //       this.$emit('update:questions', this.onConvert(val, copyQuestions, question));
-  //   },
-
-  //   handlePrevious() {
-  //     this.$emit('update:pageNoCursor', this.pageNoCursor - 1);
-  //   },
-
-  //   async handleNext() {
-  //       try {
-  //           await this.handleValidate(true);
-  //           this.$emit('update:pageNoCursor', this.pageNoCursor + 1);
-  //       } catch (error) {
-  //           // TODO
-  //       }
-  //   },
-
-  //   async handleSubmit() {
-  //       try {
-  //           await this.handleValidate(true);
-  //           this.$emit('submit');
-  //       } catch (error) {
-  //           // TODO
-  //       }
-  //   },
-
-  //   handleValidate(showTip) {
-  //     const source = this.realQuestions
-  //       .filter(question => !['pager'].includes(question.widgetType))
-  //       .reduce((result, current) => ({
-  //         ...result,
-  //         [current.key]: current.propsContainer.value
-  //       }), {});
-  //     return new Promise((resolve, reject) => {
-  //       // eslint-disable-next-line consistent-return
-  //       this.schema.validate(source, (errors) => {
-  //         if (errors) {
-  //           if (showTip) {
-  //             this.handleShowErrorMessage(errors);
-  //           }
-  //           this.isValidate = false;
-  //           reject();
-  //           return;
-  //         }
-  //         this.isValidate = true;
-  //         resolve();
-  //       });
-  //     });
-  //   },
-
-  //   handleShowErrorMessage() {
-  //       // TODO 从props传入校验失败处理函数
-  //       this.$toast.isShow('选项是必填的');
-  //   },
-
   computed: {
-  //   skipLength() {
-  //       let sum = 0;
-  //       for (let i = 0; i < this.pageNoCursor; i += 1) {
-  //           sum += this.pageSizeRules[i];
-  //       }
-  //       return sum;
-  //   },
-
     realQuestions() {
       // 根据当前页数来获取真实的问题
-      return getQuestionByPageNoCursor(this.questions, this.pageNoCursor);
-            // .slice(this.skipLength, this.skipLength + this.pageSizeRules[this.pageNoCursor])
-            // .filter(({ skip }) => !skip);
+      return getQuestionByPageNoCursor(this.questions, this.pageNoCursor)
+        .filter(({ key }) => this.relatedQuestionMap[key] !== false);
     },
 
     isFirstPageNo() {
@@ -171,49 +121,42 @@ export default {
       return (this.questions.filter(question => question.widgetType === ISOLATION).length - 1) === this.pageNoCursor;
     },
 
-  //   showPrevousButton() {
-  //       return this.pageNoCursor !== 0;
-  //   },
+    relatedQuestionMap() {
+      return this.questions.reduce((result, current) => {
+        const related = current.config?.related;
+        if (isNil(related)) {
+          return result;
+        }
+        const widgetValue = current.widgetProps?.value;
+        Object.entries(related).forEach(([answer, key]) => {
+          result[key] = (answer === widgetValue);
+        });
+        return result;
+      }, {});
+    },
 
-  //   showNextButton() {
-  //       // 游标超出或者到底
-  //       return this.pageNoCursor < (this.pageSizeRules.length - 1);
-  //   },
-
-  //   showSubmitButton() {
-  //       return !this.showNextButton;
-  //   },
-
-  //   schema() {
-  //       const descriptor = this.realQuestions.reduce((result, current) => {
-  //           if (current.rules) {
-  //               return {
-  //                   ...result,
-  //                   [current.key]: current.rules
-  //               };
-  //           }
-  //           return result;
-  //       }, {});
-  //       return new Schema(descriptor);
-  //   },
-    
-  //   /**
-  //    * 分页用来做切换不同题目的场景
-  //    */
-  //   pageSizeRules() {
-  //     return [99999]
-  //   },
-
+    schema() {
+      const descriptor = this.realQuestions.reduce((result, current) => {
+        if (current.rules) {
+          return {
+            ...result,
+            [current.key]: current.rules
+          };
+        }
+        return result;
+      }, {});
+      return new Schema(descriptor);
+    },
   },
 
-  // async mounted() {
-  //   try {
-  //       await this.handleValidate();
-  //   } catch (error) {
-  //       // eslint-disable-next-line no-console
-  //       console.error('mounted validate error', error);
-  //   }
-  // },
+  async mounted() {
+    try {
+        await this.handleValidate();
+    } catch (error) {
+        // eslint-disable-next-line no-console
+        console.log('mounted validate error', error);
+    }
+  },
 
   render() {
     const {
@@ -223,24 +166,26 @@ export default {
       isLastPageNo,
     } = this;
     return <ul class={`${prefixCls}-question-container`}>
-      {realQuestions.map(question => {
+      {realQuestions.map((question) => {
         const {
           key,
           title: Title,
           widget: Widget,
           widgetType,
-          propsContainer = {},
+          widgetProps = {},
+          className,
+          trigger = 'input'
         } = question;
-        let props = {};
+        let propsBinding = {};
         if (widgetType === FORM) {
-          props = {
-            ...propsContainer,
+          propsBinding = {
+            props: widgetProps,
             on: {
-              input: this.handleInput
-            }
+              [trigger]: (val) => this.handleInput(val, question.index),
+            },
           }
         } else if (widgetType === ISOLATION) {
-          props = {
+          propsBinding = {
             on: {
               next: this.onNext,
               prev: this.onPrev,
@@ -252,11 +197,12 @@ export default {
             },
           }
         }
-        return <li key={key}>
-          {!isNil(Title) && <label>
+        propsBinding.class = className;
+        return <li key={key} class={`${prefixCls}-question-item ${prefixCls}-${key}-question-item`}>
+          {!isNil(Title) && <label class={`${prefixCls}-${key}-question-item-label`}>
             { isComponent(Title) ? <Title /> : Title }
           </label>}
-          <Widget {...props} />
+          <Widget {...propsBinding} />
         </li>;
       })}
   </ul>

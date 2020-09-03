@@ -1,4 +1,16 @@
-import { RadioGroup, Radio } from 'vant';
+<template>
+  <van-radio-group v-model="internalValue">
+    <van-radio
+      v-for="option in options"
+      :name="option.value"
+      :key="option.value"
+    >
+      {{ option.label }}
+    </van-radio>
+  </van-radio-group>
+</template>
+
+<script>
 
 export default {
   name: 'custom-radio',
@@ -11,7 +23,6 @@ export default {
     
     value: {
       type: [String, Number],
-      required: true,
     }
   },
 
@@ -25,16 +36,6 @@ export default {
       },
     }
   },
-
-  render() {
-    return <RadioGroup value={internalValue}>
-    <Radio
-      v-for="option in options"
-      :name="option.value"
-      :key="option"
-    >
-      {{ option.label }}
-    </Radio>
-  </RadioGroup>
-  }
 };
+</script>
+
