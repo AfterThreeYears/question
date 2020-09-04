@@ -64,7 +64,8 @@ export default {
         .catch(noop);
     },
 
-    handleInput(value, index) {
+    handleInput(value, question) {
+      const { index, config = {} } = question;
       let newValue = value;
       const copyQuestions = cloneDeep(this.questions);
       const copyQuestion = copyQuestions[index];
@@ -79,6 +80,11 @@ export default {
       }
       copyQuestion.widgetProps.value = newValue;
       this.$emit('update:questions', copyQuestions);
+      this.$nextTick(() => {
+        if (config?.autoNext) {
+          this.onNext();
+        }
+      });
     },
 
     handleValidate(showTip) {
@@ -128,8 +134,9 @@ export default {
           return result;
         }
         const widgetValue = current.widgetProps?.value;
-        Object.entries(related).forEach(([answer, key]) => {
-          result[key] = (answer === widgetValue);
+        Object.entries(related).forEach(([key, answer]) => {
+          const answers = Array.isArray(answer) ? answer : [answer];
+          result[key] = answers.includes(widgetValue);
         });
         return result;
       }, {});
@@ -181,7 +188,7 @@ export default {
           propsBinding = {
             props: widgetProps,
             on: {
-              [trigger]: (val) => this.handleInput(val, question.index),
+              [trigger]: (val) => this.handleInput(val, question),
             },
           }
         } else if (widgetType === ISOLATION) {

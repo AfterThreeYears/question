@@ -17,12 +17,12 @@ export default [
     }],
   },
   {
-    title: '您的地址?',
-    key: 'address',
+    title: '您的年龄?',
+    key: 'age',
     widgetType: FORM,
     widget: Picker,
     widgetProps: {
-      columns: ['杭州', '宁波', '温州', '绍兴', '湖州', '嘉兴', '金华', '衢州'],
+      columns: ['40', '50', '60'],
       showToolbar: true,
       title: "标题"
     },
@@ -31,6 +31,11 @@ export default [
       required: true
     }],
     trigger: 'confirm',
+    config: {
+      related: {
+        'oldMan': ['50', '60']
+      },
+    },
   },
   {
     widgetType: ISOLATION,
@@ -56,9 +61,10 @@ export default [
     },
     config: {
       related: {
-        nan: 'hobby',
-        nv: 'skill'
-      }
+        hobby: 'nan',
+        skill: 'nv'
+      },
+      autoNext: true,
     },
     rules: [{
       type: 'string',
@@ -134,5 +140,20 @@ export default [
     widgetType: ISOLATION,
     widget: NextPager,
     key: 'pager3',
+  },
+  {
+    title: '大于50岁出现的问题',
+    key: 'oldMan',
+    widgetType: FORM,
+    widget: Field,
+    rules: [{
+      type: 'string',
+      required: true
+    }],
+  },
+  {
+    widgetType: ISOLATION,
+    widget: NextPager,
+    key: 'pager4',
   },
 ].map((item, index) => ({ ...item, index }));
