@@ -14,6 +14,9 @@ export default [
     rules: [{
       type: 'string',
       required: true
+    }, {
+      type: 'number',
+      required: true
     }],
   },
   {
@@ -31,11 +34,6 @@ export default [
       required: true
     }],
     trigger: 'confirm',
-    config: {
-      related: {
-        'oldMan': ['50', '60']
-      },
-    },
   },
   {
     widgetType: ISOLATION,
@@ -60,10 +58,6 @@ export default [
       ],
     },
     config: {
-      related: {
-        hobby: 'nan',
-        skill: 'nv'
-      },
       autoNext: true,
     },
     rules: [{
