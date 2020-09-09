@@ -14,9 +14,6 @@ export default [
     rules: [{
       type: 'string',
       required: true
-    }, {
-      type: 'number',
-      required: true
     }],
   },
   {
@@ -48,16 +45,26 @@ export default [
     widgetProps: {
       options: [
         {
-          value: 'nan',
+          value: '男',
           label: '男'
         },
         {
-          value: 'nv',
+          value: '女',
           label: '女'
         }
       ],
     },
     config: {
+      related: {
+        hobby: {
+            op: 'EQUAL',
+            answer: '男'
+        },
+        skill: {
+            op: 'EQUAL',
+            answer: '女',
+        }
+      },
       autoNext: true,
     },
     rules: [{
@@ -99,7 +106,7 @@ export default [
       },
     },
     rules: [{
-      type: 'string',
+      type: 'array',
       required: true
     }],
   },

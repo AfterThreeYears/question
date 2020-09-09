@@ -1,5 +1,6 @@
 import Schema from 'async-validator';
 import { isNil, cloneDeep, noop } from 'lodash';
+import scrollIntoView from 'scroll-into-view-if-needed';
 import {
     isComponent,
     getQuestionByPageNoCursor,
@@ -29,6 +30,11 @@ export default {
         pageNoCursor: {
             type: Number,
             default: 0
+        },
+
+        scrollToFirstError: {
+            type: Boolean,
+            default: false
         }
     },
 
@@ -37,6 +43,7 @@ export default {
             isValidate: false,
             direction: 'onNext',
             errorMap: {},
+            dirtyMap: {},
         };
     },
 
@@ -52,35 +59,47 @@ export default {
         onNext() {
             this.direction = 'onNext';
             this.handleValidate(true)
-                .then(() => {
-                    this.$emit('update:pageNoCursor', this.pageNoCursor + 1);
-                })
-                .catch(noop);
+              .then(() => {
+                this.$emit('update:pageNoCursor', this.pageNoCursor + 1);
+                this.$nextTick(() => {
+                  window.scrollTo(0, 0);
+                });
+              })
+              .catch(noop)
+              .finally(() => {
+                this.handleSetFieldsToDirty();
+              })
         },
 
         onPrev() {
             this.direction = 'onPrev';
             this.$emit('update:pageNoCursor', this.pageNoCursor - 1);
+            this.$nextTick(() => {
+              window.scrollTo(0, 0);
+            });
         },
 
         onSubmit() {
-            this.handleValidate(true)
-                .then(() => {
-                    const formQuestions = this.questions
-                        .filter(question => question.widgetType === FORM)
-                        .map((question) => {
-                            const needClearValue = this.relatedQuestionMap[question.key] === false;
-                            return {
-                                ...question,
-                                widgetProps: {
-                                    ...question.widgetProps,
-                                    value: needClearValue ? undefined : question.widgetProps.value
-                                }
-                            };
-                        });
-                    this.$emit('submit', formQuestions, this.questions);
-                })
-                .catch(noop);
+          this.handleValidate(true)
+            .then(() => {
+              const formQuestions = this.questions
+              .filter(question => question.widgetType === FORM)
+              .map((question) => {
+                  const needClearValue = this.relatedQuestionMap[question.key] === false;
+                  return {
+                      ...question,
+                      widgetProps: {
+                          ...question.widgetProps,
+                          value: needClearValue ? undefined : question.widgetProps.value
+                      }
+                  };
+              });
+              this.$emit('submit', formQuestions, this.questions);
+            })
+            .catch(noop)
+            .finally(() => {
+              this.handleSetFieldsToDirty();
+            });
         },
 
         handleInput(value, question) {
@@ -99,6 +118,10 @@ export default {
             }
             copyQuestion.widgetProps.value = newValue;
             this.$emit('update:questions', copyQuestions);
+            this.$set(this.dirtyMap, question.key, true);
+            this.$nextTick(() => {
+              this.handleValidate().catch(noop);
+            });
             // hack
             this.$nextTick(() => {
                 if (config.autoSubmit) {
@@ -111,7 +134,7 @@ export default {
             });
         },
 
-        handleValidate(showTip) {
+        handleValidate(callFeedback) {
             const source = this.realQuestions
                 .filter(question => question.widgetType === FORM)
                 .reduce((result, current) => ({
@@ -121,10 +144,13 @@ export default {
             return new Promise((resolve, reject) => {
                 // eslint-disable-next-line consistent-return
                 this.schema.validate(source, (errors) => {
-                    this.$set(this, 'errorMap', convert2Map(errors, 'field'));
-                    if (errors) {
-                        if (showTip) {
+                  this.$set(this, 'errorMap', convert2Map(errors || [], 'field'));
+                    if (Array.isArray(errors) && errors.length) {
+                        if (callFeedback) {
                             this.$emit('showErrorMessage', errors);
+                            if (this.scrollToFirstError) {
+                              this.handleScrollErrorField(errors[0].field);
+                            }
                         }
                         this.isValidate = false;
                         reject();
@@ -191,12 +217,33 @@ export default {
         },
 
         formItemClass(key) {
-          const { prefixCls, errorMap } = this;
+          const { prefixCls, errorMap, dirtyMap } = this;
           return {
             [`${prefixCls}-question-item`]: true,
             [`${prefixCls}-${key}-question-item`]: true,
-            [`${prefixCls}-question-item-invalidate`]: errorMap[key],
+            [`${prefixCls}-question-item-invalidate`]: errorMap[key] && dirtyMap[key],
           };
+        },
+
+        handleScrollErrorField(field) {
+          const { prefixCls } = this;
+          const node = document.querySelector(`.${prefixCls}-${field}-question-item`);
+          if (!node) {
+            // eslint-disable-next-line no-console
+            console.warn('can not find node:', node);
+            return;
+          }
+          scrollIntoView(node, {
+            scrollMode: 'if-needed',
+          });
+        },
+
+        handleSetFieldsToDirty() {
+          const dirtyMap = Object.values(this.realQuestions).reduce((result, question) => ({
+            ...result,
+            [question.key]: true,
+          }), {});
+          this.$set(this, 'dirtyMap', dirtyMap);
         }
     },
 

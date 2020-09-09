@@ -6,6 +6,7 @@
       :page-no-cursor.sync="pageNoCursor"
       @showErrorMessage="showErrorMessage"
       @submit="handleSubmit"
+      scroll-to-first-error
     />
   </div>
 </template>
@@ -40,3 +41,13 @@ export default {
   }
 }
 </script>
+
+<style>
+  .prefix-question-item {
+    height: 600px;
+  }
+
+  .prefix-question-item-invalidate {
+    border: 1px solid;
+  }
+</style>
